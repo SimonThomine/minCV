@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class Mlp(nn.Module):
-  def __init__(self, input_dim: int, classes: int, hidden_dims: list[int], act= nn.ReLU(),bn=False, dropout=False, dropout_p=0.5):
+  def __init__(self, input_dim: int, classes: int, hidden_dims: list[int], act= nn.ReLU(),bn=False, dropout=False, dropout_p=0.5,**kwargs):
     super().__init__()
     self.net=nn.ModuleList()
     
@@ -26,6 +26,10 @@ class Mlp(nn.Module):
   
   
   def forward(self, x):
+    # If it is an image flatten it
+    if len(x.shape) > 2:
+      x = x.view(x.size(0), -1)
+    
     for layer in self.net:
       x=layer(x)
     return x

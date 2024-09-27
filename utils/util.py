@@ -21,8 +21,10 @@ class AverageMeter(object):
         
 def create_scheduler(trainer,scheduler_type='OneCycleLR'):
   trainer.scheduler_type=scheduler_type
+  lr=trainer.data['lr']
+  num_epochs=trainer.data['num_epochs']
   if scheduler_type=='OneCycleLR':
-    trainer.scheduler=optim.lr_scheduler.OneCycleLR(trainer.optimizer,max_lr=trainer.lr*10,epochs=trainer.num_epochs,steps_per_epoch=len(trainer.train_loader))
+    trainer.scheduler=optim.lr_scheduler.OneCycleLR(trainer.optimizer,max_lr=lr*10,epochs=num_epochs,steps_per_epoch=len(trainer.train_loader))
   elif scheduler_type=='ReduceLROnPlateau':
     trainer.scheduler=optim.lr_scheduler.ReduceLROnPlateau(trainer.optimizer)
   elif scheduler_type=='StepLR':

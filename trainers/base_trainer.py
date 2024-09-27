@@ -6,15 +6,11 @@ from tqdm import tqdm
 class BaseTrainer:          
     def __init__(self, data):  
         
-        
         self.data=data
         
-        os.makedirs(self.model_dir, exist_ok=True)
-        
-        self.load_model()
         
         self.load_data()
-        
+        self.load_model()
         self.load_optim()
         
         create_scheduler(self)
@@ -38,7 +34,7 @@ class BaseTrainer:
     def infer(self,image,test=False):
         pass
     
-    def computeLoss(self):
+    def compute_loss(self):
         pass
     
     def cal_score(self):
@@ -61,12 +57,13 @@ class BaseTrainer:
         self.change_mode("train")
         
         best_score = None
-        epoch_bar = tqdm(total=len(self.train_loader) * self.num_epochs,desc="Training",unit="batch")
+        epoch_bar = tqdm(total=len(self.train_loader) * self.data["num_epochs"],desc="Training",unit="batch")
         
-        for _ in range(1, self.num_epochs + 1):
+        for _ in range(1, self.data["num_epochs"] + 1):
             
             self.prepare_epoch()
             
+            losses = AverageMeter()
             for sample in self.train_loader:
                 self.sample=sample
                 
@@ -76,20 +73,24 @@ class BaseTrainer:
                 with torch.set_grad_enabled(True):
                   
                     self.infer()
-                    loss=self.computeLoss()
+                    loss=self.compute_loss()
                     loss.backward()
+                    losses.update(loss.sum().item(), sample[0].size(0))
                     self.optimizer.step()
                     if self.scheduler_type=='OneCycleLR':
                         self.scheduler.step()
+                    epoch_bar.update()
                     
-                    
-                epoch_bar.set_postfix({"Loss": loss.item()})
-                epoch_bar.update()
+            
+            
             
             if self.scheduler_type in ['ReduceLROnPlateau','StepLR']:
                 self.scheduler.step()            
             
             val_loss = self.val(epoch_bar)
+            
+            epoch_bar.set_postfix({"Train Loss": losses.avg, "Val Loss": val_loss})
+            
             if best_score is None:
                 best_score = val_loss
                 self.save_checkpoint()
@@ -105,8 +106,6 @@ class BaseTrainer:
         self.change_mode("eval")
         losses = AverageMeter()
         
-        self.load_iter()
-        
         for sample in self.val_loader: 
             self.sample=sample            
             self.prepare_batch()
@@ -114,9 +113,10 @@ class BaseTrainer:
             with torch.set_grad_enabled(False):
                 
                 self.infer()
-                loss=self.computeLoss()
+                loss=self.compute_loss()
+                losses.update(loss.sum().item(), sample[0].size(0))
                 
-        epoch_bar.set_postfix({"Loss": loss.item()})
+        epoch_bar.set_postfix({"Val Loss": loss.item()})
 
         return losses.avg
 
