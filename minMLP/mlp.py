@@ -13,7 +13,7 @@ class Mlp(nn.Module):
       self.add_layer(in_feat, out_feat, act=act, bn=bn, dropout=dropout, dropout_p=dropout_p)
      
     # Softmax and sigmoid are handled in the loss function
-    self.net.append(nn.Linear(hidden_dims[-1], classes))
+    self.net.append(nn.Linear(hidden_dims[-1], classes if classes>2 else 1))
 
       
   def add_layer(self, in_feat, out_feat,act,bn=False,dropout=False,dropout_p=0.5):
@@ -32,7 +32,7 @@ class Mlp(nn.Module):
     
     for layer in self.net:
       x=layer(x)
-    return x
+    return x.squeeze()
   
   
 # model=Mlp(input_dim=10, classes=5, hidden_dims=[32, 64, 128])

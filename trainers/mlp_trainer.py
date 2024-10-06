@@ -33,7 +33,8 @@ class MlpTrainer(BaseTrainer):
       self.model.eval()
 
   def load_data(self):
-      self.train_loader,self.val_loader,self.test_loader,self.classes,self.input_dim=load_dataset(self.data["dataset"],self.data["batch_size"])
+      print(self.data["image_size"])
+      self.train_loader,self.val_loader,self.test_loader,self.classes,self.input_dim=load_dataset(**self.data)
       
   def infer(self):
       image,self.label=self.sample

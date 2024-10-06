@@ -7,8 +7,9 @@ conf={
     "lr":0.001,
     "num_epochs":20,
     "batch_size":64,
-    "dataset":"stl10",
-    "device":"cuda"
+    "dataset":"hymenoptera",
+    "device":"mps",
+    "image_size":(224,224) # (224,224) if not specified
 }
 
 trainer=MlpTrainer(conf)
