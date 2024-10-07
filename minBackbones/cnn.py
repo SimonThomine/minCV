@@ -2,8 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class Mlp(nn.Module):
-  def __init__(self, input_dim: int, classes: int, hidden_dims: list[int], act= nn.ReLU(),bn=False, dropout=False, dropout_p=0.5,**kwargs):
+class Cnn(nn.Module):
+  def __init__(self, input_dim: int, hidden_dims: list[int], act= nn.ReLU(), #classes: int, 
+               bn=False, dropout=False, dropout_p=0.5,type="classification",**kwargs):
     super().__init__()
     self.net=nn.ModuleList()
     
@@ -12,8 +13,14 @@ class Mlp(nn.Module):
     for in_feat, out_feat in  zip(hidden_dims,hidden_dims[1:]):
       self.add_layer(in_feat, out_feat, act=act, bn=bn, dropout=dropout, dropout_p=dropout_p)
      
-    # Softmax and sigmoid are handled in the loss function
-    self.net.append(nn.Linear(hidden_dims[-1], classes if classes>2 else 1))
+    # Head depending on the type of task
+    if type=="classification":
+      # Softmax and sigmoid are handled in the loss function
+      classes=kwargs.get("classes")
+      self.net.append(nn.Linear(hidden_dims[-1], classes if classes>2 else 1))
+    elif type=="autoencoder":
+      self.net.append(nn.Linear(hidden_dims[-1], input_dim))
+    
 
       
   def add_layer(self, in_feat, out_feat,act,bn=False,dropout=False,dropout_p=0.5):
