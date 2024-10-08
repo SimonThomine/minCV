@@ -2,10 +2,11 @@ import torch.nn as nn
 from minBackbones.layers import BaseLayer
 
 class Mlp(nn.Module):
-  def __init__(self, input_dim: int, layers: list[BaseLayer],type="classification",**kwargs):
+  def __init__(self, image_dim, layers: list[BaseLayer],type="classification",**kwargs):
     super().__init__()
     self.net=nn.ModuleList()
-    
+    input_dim=image_dim[0]*image_dim[1]*image_dim[2]
+
     previous_dim=input_dim
     for layer in  layers:
       self.add_layer(previous_dim, layer)
@@ -26,8 +27,7 @@ class Mlp(nn.Module):
     self.net.append(layer.act)
     if layer.bn:
       self.net.append(nn.BatchNorm1d(layer.hidden_dim))
-    if layer.dropout:
-      self.net.append(nn.Dropout(p=layer.dropout_p))
+    self.net.append(nn.Dropout(p=layer.dropout))
   
   
   def forward(self, x):
@@ -39,11 +39,4 @@ class Mlp(nn.Module):
       x=layer(x)
     return x.squeeze()
   
-  
-# model=Mlp(input_dim=10, classes=5, hidden_dims=[32, 64, 128])
-# print(model)
-# dummy_input=torch.randn(10)
-# out=model(dummy_input)
-# print(out)
-# print(out.shape)
      

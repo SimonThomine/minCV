@@ -24,10 +24,8 @@ class ClassificationCustomDataset(Dataset):
 
 
       test_img=self.transform(Image.open(self.data[0][0]))
-      if (shape := test_img.shape) and len(shape) == 3:
-        self.input_dim = shape[0] * shape[1] * shape[2]
-      else:
-        self.input_dim = shape[0] * shape[1]
+
+      self.image_dim = test_img.shape
       
   def __len__(self):
       return len(self.data)
@@ -59,10 +57,8 @@ class AutoencoderCustomDataset(Dataset):
 
 
       test_img=self.transform(Image.open(self.data[0][0]))
-      if (shape := test_img.shape) and len(shape) == 3:
-        self.input_dim = shape[0] * shape[1] * shape[2]
-      else:
-        self.input_dim = shape[0] * shape[1]
+      
+      self.image_dim = test_img.shape
       
   def __len__(self):
       return len(self.data)

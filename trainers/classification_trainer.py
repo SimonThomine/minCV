@@ -3,12 +3,12 @@ import torch
 import torch.optim as optim
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 from trainers.base_trainer import BaseTrainer
-from minBackbones.mlp import Mlp
-from minBackbones.layers import BaseLayer,MlpLayer,CnnLayer
+from minBackbones import BaseLayer,BACKBONES
 from dataset.load_data import load_classi_dataset
 
 class ClassiTrainer(BaseTrainer):
   def __init__(self, data):
+    self.backbone=BACKBONES[data["model_family"]]
     super().__init__(data)
     
     assert "layers" in self.data and all(isinstance(x, BaseLayer) for x in self.data["layers"]), "layers not found in data or not a list of Layer objects"
@@ -22,9 +22,8 @@ class ClassiTrainer(BaseTrainer):
       self.criterion=torch.nn.BCEWithLogitsLoss()
     
   def load_model(self):
-    # Pas forcément mlp, peut être cnn, transformers, rnn, etc
-    self.model=Mlp(classes=self.classes,input_dim=self.input_dim,**self.data).to(self.data["device"])
-    
+    self.model=self.backbone(image_dim=self.image_dim,classes=self.classes,**self.data).to(self.data["device"])
+
   def load_optim(self):
     self.optimizer = optim.Adam(self.model.parameters(), lr=self.data["lr"])
     
@@ -35,8 +34,11 @@ class ClassiTrainer(BaseTrainer):
       self.model.eval()
 
   def load_data(self):
-      print(self.data["image_size"])
-      self.train_loader,self.val_loader,self.test_loader,self.classes,self.input_dim=load_classi_dataset(**self.data)
+      
+      self.train_loader,self.val_loader,self.test_loader,dataset_info=load_classi_dataset(**self.data)
+      self.image_dim=dataset_info.image_dim
+      self.classes=dataset_info.classes
+
       
   def infer(self):
       image,self.label=self.sample
@@ -54,7 +56,6 @@ class ClassiTrainer(BaseTrainer):
       self.model.load_state_dict(torch.load(self.model_dir+"/mlp.pth"))
     
   def cal_score(self):
-      print(self.pred.shape)
       if self.classes>2:
         _, prediction = torch.max(self.pred, 1)
       else:

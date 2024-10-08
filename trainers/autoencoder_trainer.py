@@ -4,13 +4,13 @@ import torch.optim as optim
 import torch.nn as nn
 from sklearn.metrics import roc_auc_score
 from trainers.base_trainer import BaseTrainer
-from minBackbones.mlp import Mlp
+from minBackbones import BaseLayer,BACKBONES
 from dataset.load_data import load_autoencoder_dataset
-from minBackbones.layers import BaseLayer
 
 
 class AeTrainer(BaseTrainer):
   def __init__(self, data):
+    self.backbone=BACKBONES[data["model_family"]]
     super().__init__(data)
     
     assert "layers" in self.data and all(isinstance(x, BaseLayer) for x in self.data["layers"]), "layers not found in data or not a list of Layer objects"
@@ -23,7 +23,7 @@ class AeTrainer(BaseTrainer):
     
   def load_model(self):
     # Pas forcément mlp, peut être cnn, transformers, rnn, etc
-    self.model=Mlp(input_dim=self.input_dim,**self.data).to(self.data["device"])
+    self.model=self.backbone(image_dim=self.image_dim,**self.data).to(self.data["device"])
     
   def load_optim(self):
     self.optimizer = optim.Adam(self.model.parameters(), lr=self.data["lr"])
@@ -36,7 +36,8 @@ class AeTrainer(BaseTrainer):
 
   def load_data(self):
       print(self.data["image_size"])
-      self.train_loader,self.val_loader,self.test_loader,self.input_dim=load_autoencoder_dataset(**self.data)
+      self.train_loader,self.val_loader,self.test_loader,dataset_info=load_autoencoder_dataset(**self.data)
+      self.image_dim=dataset_info.image_dim
       
   def infer(self):
       self.image,self.label=self.sample

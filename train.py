@@ -1,8 +1,8 @@
-from trainers.classification_trainer import ClassiTrainer
-from trainers.autoencoder_trainer import AeTrainer
-from minBackbones.layers import BaseLayer,MlpLayer,CnnLayer
+from trainers import TRAINERS
+from minBackbones import CnnLayer,MlpLayer,CnnLayerT,TransformerParams
 
-# classification datasets : mnist, cifar10, cifar100, fashionmnist, kmnist, svhn, stl10
+
+# classification datasets : mnist, cifar10, cifar100, fashionmnist, kmnist
 
 # Tasks : 
 # - classification
@@ -17,22 +17,46 @@ from minBackbones.layers import BaseLayer,MlpLayer,CnnLayer
 # Calcul automatique des dimensions si pas spécifié (pour les couches mlp de fin par exemple) (déjà fait en fait)
 
 
+# conf={
+#     "model_family":"mlp",
+#     "layers":[MlpLayer(256),MlpLayer(256),MlpLayer(128),MlpLayer(128),MlpLayer(64)],
+#     "lr":0.001,
+#     "num_epochs":20,
+#     "batch_size":64,
+#     "dataset":"hymenoptera", #hymenoptera  mvtec/carpet
+#     "type":"classification",
+#     "device":"mps",
+#     "image_size":(224,224) # (224,224) if not specified
+# }
+
+# TODO default model family
+# conf={
+#     "model_family":"cnn",
+#     "layers": [CnnLayer(32),CnnLayer(64),CnnLayer(128),CnnLayer(256),MlpLayer(512),MlpLayer(256)],
+#     "lr":0.001,
+#     "num_epochs":20,
+#     "batch_size":64,
+#     "dataset":"hymenoptera", #hymenoptera  mvtec/carpet
+#     "type":"classification",
+#     "device":"mps",
+#     "image_size":(224,224) # (224,224) if not specified
+# }
+
 conf={
-    "model_family":"mlp",
-    "layers":[MlpLayer(256),MlpLayer(256),MlpLayer(128),MlpLayer(128),MlpLayer(64)],
+    "model_family":"cnn",
+    "layers": TransformerParams(patch_size=32,n_embd=64,n_head=8,n_layers=6),
     "lr":0.001,
-    "num_epochs":5,
+    "num_epochs":20,
     "batch_size":64,
-    "dataset":"mvtec/carpet", #hymenoptera  mvtec/carpet
-    "type":"autoencoder",
+    "dataset":"hymenoptera", #hymenoptera  mvtec/carpet
+    "type":"classification",
     "device":"mps",
     "image_size":(224,224) # (224,224) if not specified
 }
 
-if conf["type"]=="classification":
-    trainer=ClassiTrainer(conf)
-elif conf["type"]=="autoencoder":
-    trainer=AeTrainer(conf)
+
+trainer_type=TRAINERS[conf["type"]]
+trainer=trainer_type(conf)
 
 trainer.train()
 trainer.test()
