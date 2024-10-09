@@ -4,17 +4,15 @@ import torch.optim as optim
 import torch.nn as nn
 from sklearn.metrics import roc_auc_score
 from trainers.base_trainer import BaseTrainer
-from minBackbones import BaseLayer,BACKBONES
+from minBackbones import BaseLayer
 from dataset.load_data import load_autoencoder_dataset
 
 
 class AeTrainer(BaseTrainer):
   def __init__(self, data):
-    self.backbone=BACKBONES[data["model_family"]]
     super().__init__(data)
     
     assert "layers" in self.data and all(isinstance(x, BaseLayer) for x in self.data["layers"]), "layers not found in data or not a list of Layer objects"
-    assert "lr" in self.data and isinstance(self.data["lr"],float), "lr not found in data or not a float"
     
     self.model_dir = f"models/{data['model_family']}_autoencoder_{self.data['dataset']}"
     os.makedirs(self.model_dir, exist_ok=True)
@@ -23,6 +21,7 @@ class AeTrainer(BaseTrainer):
     
   def load_model(self):
     # Pas forcément mlp, peut être cnn, transformers, rnn, etc
+    super().load_model()
     self.model=self.backbone(image_dim=self.image_dim,**self.data).to(self.data["device"])
     
   def load_optim(self):

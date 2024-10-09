@@ -27,7 +27,7 @@ class CnnLayerT(BaseLayer):
         self.kernel_size=kernel_size
         self.padding=padding
 
-class TransformerParams():
+class ViTParams():
     def __init__(self, patch_size:int ,n_embd: int, n_head: int, n_layers: int,dropout=0.):
         self.n_embd=n_embd
         self.n_head=n_head

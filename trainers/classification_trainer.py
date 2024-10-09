@@ -3,17 +3,16 @@ import torch
 import torch.optim as optim
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 from trainers.base_trainer import BaseTrainer
-from minBackbones import BaseLayer,BACKBONES
+from minBackbones import BaseLayer,ViTParams
 from dataset.load_data import load_classi_dataset
 
 class ClassiTrainer(BaseTrainer):
   def __init__(self, data):
-    self.backbone=BACKBONES[data["model_family"]]
     super().__init__(data)
     
-    assert "layers" in self.data and all(isinstance(x, BaseLayer) for x in self.data["layers"]), "layers not found in data or not a list of Layer objects"
-    assert "lr" in self.data and isinstance(self.data["lr"],float), "lr not found in data or not a float"
-    
+    assert "layers" in self.data and (isinstance(self.data["layers"],ViTParams)
+            or all(isinstance(x, BaseLayer) for x in self.data["layers"]) ), "layers not found in data or not a list of Layer objects"
+
     self.model_dir = f"models/{data['model_family']}_classification_{self.data['dataset']}"
     os.makedirs(self.model_dir, exist_ok=True)
     if self.classes>2:
@@ -22,6 +21,7 @@ class ClassiTrainer(BaseTrainer):
       self.criterion=torch.nn.BCEWithLogitsLoss()
     
   def load_model(self):
+    super().load_model()
     self.model=self.backbone(image_dim=self.image_dim,classes=self.classes,**self.data).to(self.data["device"])
 
   def load_optim(self):

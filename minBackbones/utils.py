@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from minBackbones.layers import BaseLayer,CnnLayer,MlpLayer, CnnLayerT,ViTParams
 
 class Head_enc(nn.Module):
 
@@ -72,3 +73,31 @@ def image_to_patches(image, patch_size):
     patches = patches.view(B,-1, C, patch_size, patch_size)
     patches_flat = patches.flatten(2, 4)
     return patches_flat
+
+
+def verify_model_family(layers,model_family):
+    if not layers:
+        raise ValueError("layers must be provided to create a model")
+    if not model_family:
+        print("model_family not provided, trying to infer it from the layers")
+    
+    if isinstance(layers, ViTParams) :
+        if model_family and model_family!="vit":
+            raise ValueError("model_family is not consistent with the layers")
+        if not model_family:
+            model_family="vit"
+            print("model_family inferred as vit")
+    elif all(isinstance(layer, MlpLayer) for layer in layers):
+        if model_family and model_family!="mlp":
+            raise ValueError("model_family is not consistent with the layers")
+        if not model_family:
+            model_family="mlp"
+            print("model_family inferred as mlp")
+    elif any(isinstance(layer, CnnLayer) for layer in layers):
+        if model_family and model_family!="cnn":
+            raise ValueError("model_family is not consistent with the layers")
+        if not model_family:
+            model_family="cnn"
+            print("model_family inferred as cnn")
+    return model_family
+    

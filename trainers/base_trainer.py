@@ -2,12 +2,19 @@ import os
 import torch
 from utils.util import AverageMeter,create_scheduler
 from tqdm import tqdm
+from minBackbones import BACKBONES,BaseLayer,ViTParams,verify_model_family
 
 class BaseTrainer:          
     def __init__(self, data):  
         
         self.data=data
         
+        
+        assert "lr" in self.data and isinstance(self.data["lr"],float), "lr not found in data or not a float"
+        assert "batch_size" in self.data and isinstance(self.data["batch_size"],int), "batch_size not found in data or not an int"
+        assert "num_epochs" in self.data and isinstance(self.data["num_epochs"],int), "num_epochs not found in data or not an int"
+
+
         
         self.load_data()
         self.load_model()
@@ -20,6 +27,9 @@ class BaseTrainer:
         pass    
     
     def load_model(self):
+        model_family=verify_model_family(self.data.get("layers",None),self.data.get("model_family",None))
+        self.data["model_family"]=model_family
+        self.backbone=BACKBONES[self.data["model_family"]]
         pass
     
     def change_mode(self,period="train"):
