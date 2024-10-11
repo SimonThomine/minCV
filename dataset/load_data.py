@@ -1,6 +1,6 @@
 import torch
 from torchvision import datasets, transforms
-from dataset.custom_datasets import ClassificationCustomDataset,AutoencoderCustomDataset
+from dataset.custom_datasets import ClassificationCustomDataset,AutoencoderCustomDataset,SegmentationCustomDataset
 
 class DatasetInfo():
     def __init__(self, dataset, image_dim):
@@ -12,6 +12,14 @@ class DatasetInfo():
         return f'dataset : {self.dataset}, input dimension : {self.image_dim}'
 
 class ClassiDatasetInfo(DatasetInfo):
+    def __init__(self, dataset, classes, image_dim):
+        super().__init__(dataset, image_dim)
+        self.classes = classes
+    def __repr__(self) :
+        return f'dataset : {self.dataset}, number of classes : {self.classes}, input dimension : {self.image_dim}'
+    
+# Basically the same as ClassiDatasetInfo
+class SegDatasetInfo(DatasetInfo):
     def __init__(self, dataset, classes, image_dim):
         super().__init__(dataset, image_dim)
         self.classes = classes
@@ -59,6 +67,19 @@ def load_autoencoder_dataset(dataset,batch_size,image_size=(224,224),**kwargs):
     train_loader, val_loader, test_loader = load_loaders(train_dataset, val_dataset, test_dataset,batch_size=batch_size)
     return train_loader, val_loader, test_loader,info
 
+def load_seg_dataset(dataset,batch_size,image_size=(224,224),**kwargs):
+    info=dataset_mapping.get(dataset)
+
+    complete_dataset=SegmentationCustomDataset(f"data/{dataset}",image_size=image_size)
+    train_dataset, val_dataset,test_dataset = split_dataset_train_val_test(complete_dataset)
+
+    info=SegDatasetInfo(dataset,complete_dataset.classes,complete_dataset.image_dim)
+
+    train_loader, val_loader, test_loader = load_loaders(train_dataset, val_dataset, test_dataset,batch_size=batch_size)
+    return train_loader, val_loader, test_loader,info
+
+
+
 def load_known_dataset(info):
     act_dataset=info.dataset
     trainval_dataset = act_dataset(root='./data', train=True, transform=transforms.ToTensor(), download=True)
@@ -77,3 +98,10 @@ def split_dataset_train_val(dataset,train_size=0.8):
     val_size = len(dataset) - train_size
     train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
     return train_dataset, val_dataset
+
+def split_dataset_train_val_test(dataset,train_size=0.8):
+    train_size = int(train_size * len(dataset))
+    val_size = int(0.1 * len(dataset))
+    test_size = len(dataset) - train_size - val_size
+    train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, val_size, test_size])
+    return train_dataset, val_dataset, test_dataset 

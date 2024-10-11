@@ -9,13 +9,12 @@ class BaseTrainer:
         
         self.data=data
         
-        
+
         assert "lr" in self.data and isinstance(self.data["lr"],float), "lr not found in data or not a float"
         assert "batch_size" in self.data and isinstance(self.data["batch_size"],int), "batch_size not found in data or not an int"
         assert "num_epochs" in self.data and isinstance(self.data["num_epochs"],int), "num_epochs not found in data or not an int"
+        assert "device" in self.data, "device not found in data"
 
-
-        
         self.load_data()
         self.load_model()
         self.load_optim()
@@ -41,7 +40,7 @@ class BaseTrainer:
     def prepare_batch(self):
         pass
     
-    def infer(self,image,test=False):
+    def infer(self):
         pass
     
     def compute_loss(self):

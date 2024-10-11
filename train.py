@@ -30,21 +30,28 @@ default_conf = {
 #     "type":"classification",
 # }
 
-# TODO default model family
-# conf={
-#     "model_family":"cnn",
-#     "layers": [CnnLayer(32),CnnLayer(64),CnnLayer(128),CnnLayer(256),MlpLayer(512),MlpLayer(256)],
-#     "dataset":"hymenoptera", #hymenoptera  mvtec/carpet
-#     "type":"classification",
-# }
 
 conf={
-    "model_family":"vit",
-    "layers": ViTParams(patch_size=32,n_embd=64,n_head=8,n_layers=6),
+    "model_family":"cnn",
+    "layers": [CnnLayer(32),CnnLayer(64),CnnLayer(128),CnnLayer(256),MlpLayer(512),MlpLayer(256)],
     "dataset":"hymenoptera", #hymenoptera  mvtec/carpet
-    "type":"classification"
-    }
+    "type":"classification",
+}
 
+# conf={
+#     "model_family":"vit",
+#     "layers": ViTParams(patch_size=32,n_embd=64,n_head=8,n_layers=6),
+#     "dataset":"hymenoptera", #hymenoptera  mvtec/carpet
+#     "type":"classification"
+#     }
+
+# conf={
+#     "model_family":"cnn",
+#     "layers": [CnnLayer(64),CnnLayer(128),CnnLayer(256),CnnLayer(512),CnnLayerT(256),CnnLayerT(128),CnnLayerT(64)],
+#     "dataset":"mvtec/carpet", #hymenoptera  mvtec/carpet Oxford-IIIT
+#     "type":"autoencoder",
+#     "image_size": (224,224) 
+# }
 
 default_conf.update(conf)
 

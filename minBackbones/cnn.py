@@ -10,11 +10,10 @@ class Cnn(nn.Module):
     self.convnet=nn.ModuleList()
     if type=="classification":
         self.mlphead=nn.ModuleList()
-    if type=="autoencoder":
+    if type=="autoencoder" or type=="segmentation":
        self.decoder=nn.ModuleList()
     self.type=type
     
-    # channel and height/width of the input
     previous_filt=image_dim[0]
     previous_size=(image_dim[1],image_dim[2])
     previous_dim=0
@@ -25,7 +24,6 @@ class Cnn(nn.Module):
         previous_size=((previous_size[0]-layer.kernel_size+2*layer.padding)//layer.stride+1, 
                        (previous_size[1]-layer.kernel_size+2*layer.padding)//layer.stride+1)
       elif isinstance(layer, MlpLayer):
-        # cnn ends with a mlp
         if previous_dim==0:
             previous_dim=previous_filt*previous_size[0]*previous_size[1]
         self.add_layer(previous_dim, layer)
@@ -36,51 +34,66 @@ class Cnn(nn.Module):
         previous_size=((previous_size[0]-1)*layer.stride+layer.kernel_size-2*layer.padding, 
                        (previous_size[1]-1)*layer.stride+layer.kernel_size-2*layer.padding)
     
-    # Head depending on the type of task
     if type=="classification":
       # Softmax and sigmoid are handled in the loss function
       classes=kwargs.get("classes")
       self.mlphead.append(nn.Linear(previous_dim, classes if classes>2 else 1))
-    # No mlp head for autoencoder
-    elif type=="autoencoder":
-      # Bof ça
+
+    elif type=="autoencoder" or type=="segmentation":
       self.decoder.append(nn.ConvTranspose2d(previous_filt, image_dim[0], kernel_size=4, stride=2, padding=1))
+    
+    elif type=="segmentation":
+        classes=kwargs.get("classes")
+        self.decoder.append(nn.ConvTranspose2d(previous_filt, classes, kernel_size=4, stride=2, padding=1))
+
+    # TODO verif network, verify if dimensions are correct for the layer agencement
     
 
   def add_layer(self, in_filters,layer):
     if isinstance(layer, CnnLayer):
-        self.convnet.append(nn.Conv2d(in_filters, layer.filters, kernel_size=layer.kernel_size, stride=layer.stride, padding=layer.padding))
-        self.convnet.append(layer.act)
-        if layer.bn:
-            self.convnet.append(nn.BatchNorm2d(layer.filters))
-        self.convnet.append(nn.Dropout(p=layer.dropout))
+        self.convnet.append(layer.create_layer(in_filters))
     elif isinstance(layer, MlpLayer):
-        self.mlphead.append(nn.Linear(in_filters, layer.hidden_dim))
-        self.mlphead.append(layer.act)
-        if layer.bn:
-            self.mlphead.append(nn.BatchNorm1d(layer.hidden_dim))
-        
-        self.mlphead.append(nn.Dropout(p=layer.dropout))
+        self.mlphead.append(layer.create_layer(in_filters))
     elif isinstance(layer, CnnLayerT):
-        self.decoder.append(nn.ConvTranspose2d(in_filters, layer.filters, kernel_size=layer.kernel_size, stride=layer.stride, padding=layer.padding))
-        self.decoder.append(layer.act)
-        if layer.bn:
-            self.decoder.append(nn.BatchNorm2d(layer.filters))
-        self.decoder.append(nn.Dropout(p=layer.dropout))
+        self.decoder.append(layer.create_layer(in_filters))
   
-  
-  def forward(self, x):
+
+  def forward_classi(self, x):
     for layer in self.convnet:
       x=layer(x)
-    # Flatten the output of the convnet
+    x=x.view(x.size(0), -1)
+    for layer in self.mlphead:
+      x=layer(x)
+    return x.squeeze()
+  
+  def forward_ae(self, x):
+    for layer in self.convnet:
+      x=layer(x)
+    for layer in self.decoder:
+      x= layer(x)
+    return x
+  
+  def forward_seg(self, x):
+    intermediate=[]
+    for layer in self.convnet:
+      x=layer(x)
+      if isinstance(layer, nn.Dropout):
+        intermediate.append(x)
+    # pop the last intermediate feature map
+    x=intermediate.pop()
+    for layer in self.decoder:
+      x= intermediate.pop() + layer(x) if isinstance(layer,nn.Dropout) else layer(x)
+    return x
+
+  
+  def forward(self, x):
     if self.type=="classification":
-        x=x.view(x.size(0), -1)
-        for layer in self.mlphead:
-            x=layer(x)
-        return x.squeeze()
+        return self.forward_classi(x)
     elif self.type=="autoencoder":
-       for layer in self.decoder:
-        x=layer(x)
-       return x  
+        return self.forward_ae(x)
+    elif self.type=="segmentation":
+        return self.forward_seg(x)
+    else:
+        raise ValueError("type not supported")
     
      

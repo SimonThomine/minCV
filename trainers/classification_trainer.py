@@ -50,10 +50,10 @@ class ClassiTrainer(BaseTrainer):
       return self.criterion(self.pred,self.label)
   
   def save_checkpoint(self):
-      torch.save(self.model.state_dict(), self.model_dir+"/mlp.pth")
+      torch.save(self.model.state_dict(), self.model_dir+"/model.pth")
     
   def load_weights(self):
-      self.model.load_state_dict(torch.load(self.model_dir+"/mlp.pth"))
+      self.model.load_state_dict(torch.load(self.model_dir+"/model.pth"))
     
   def cal_score(self):
       if self.classes>2:
