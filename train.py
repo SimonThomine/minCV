@@ -19,8 +19,8 @@ default_conf = {
     "lr": 0.001,
     "num_epochs": 10,
     "batch_size": 32,
-    "device": "mps",
-    "image_size": (224, 224)
+    "device": "cpu",
+    "image_size": (28, 28)
 }
 
 # conf={
@@ -34,7 +34,7 @@ default_conf = {
 conf={
     "model_family":"cnn",
     "layers": [CnnLayer(32),CnnLayer(64),CnnLayer(128),CnnLayer(256),MlpLayer(512),MlpLayer(256)],
-    "dataset":"hymenoptera", #hymenoptera  mvtec/carpet
+    "dataset":"bloodmnist", #hymenoptera  mvtec/carpet
     "type":"classification",
 }
 

@@ -1,22 +1,24 @@
 import torch
 from torchvision import datasets, transforms
 from dataset.custom_datasets import ClassificationCustomDataset,AutoencoderCustomDataset,SegmentationCustomDataset
+from medmnist import ChestMNIST,BloodMNIST,PathMNIST,ChestMNIST,PneumoniaMNIST,RetinaMNIST,OCTMNIST,DermaMNIST,BreastMNIST,TissueMNIST,OrganAMNIST,OrganCMNIST,OrganSMNIST
+
 
 class DatasetInfo():
-    def __init__(self, dataset, image_dim):
+    def __init__(self, dataset, image_dim,origin=None):
         self.dataset = dataset
         self.image_dim = image_dim
-        
+        self.origin=origin
     
     def __repr__(self):
         return f'dataset : {self.dataset}, input dimension : {self.image_dim}'
 
 class ClassiDatasetInfo(DatasetInfo):
-    def __init__(self, dataset, classes, image_dim):
-        super().__init__(dataset, image_dim)
+    def __init__(self, dataset, classes, image_dim,origin=None):
+        super().__init__(dataset, image_dim,origin)
         self.classes = classes
     def __repr__(self) :
-        return f'dataset : {self.dataset}, number of classes : {self.classes}, input dimension : {self.image_dim}'
+        return f'dataset : {self.dataset}, number of classes : {self.classes}, input dimension : {self.image_dim}, origin : {self.origin}'
     
 # Basically the same as ClassiDatasetInfo
 class SegDatasetInfo(DatasetInfo):
@@ -28,11 +30,23 @@ class SegDatasetInfo(DatasetInfo):
 
 
 dataset_mapping = {
-    "mnist": ClassiDatasetInfo(datasets.MNIST, 10, (1,28,28)),
-    "cifar10": ClassiDatasetInfo(datasets.CIFAR10, 10, (3,32,32)),
-    "cifar100": ClassiDatasetInfo(datasets.CIFAR100, 100, (3,32,32)),
-    "fashionmnist": ClassiDatasetInfo(datasets.FashionMNIST, 10, (1,28,28)),
-    "kmnist": ClassiDatasetInfo(datasets.KMNIST, 10, (1,28,28)),
+    "mnist": ClassiDatasetInfo(datasets.MNIST, 10, (1,28,28),origin="torchvision"),
+    "cifar10": ClassiDatasetInfo(datasets.CIFAR10, 10, (3,32,32),origin="torchvision"),
+    "cifar100": ClassiDatasetInfo(datasets.CIFAR100, 100, (3,32,32),origin="torchvision"),
+    "fashionmnist": ClassiDatasetInfo(datasets.FashionMNIST, 10, (1,28,28),origin="torchvision"),
+    "kmnist": ClassiDatasetInfo(datasets.KMNIST, 10, (1,28,28),origin="torchvision"),
+    "chestmnist": ClassiDatasetInfo(ChestMNIST, 14, (1,28,28),origin="medmnist"),
+    "bloodmnist": ClassiDatasetInfo(BloodMNIST, 8, (3,28,28),origin="medmnist"),
+    "pathmnist": ClassiDatasetInfo(PathMNIST, 9, (3,28,28),origin="medmnist"),
+    "pneumoniamnist": ClassiDatasetInfo(PneumoniaMNIST, 2, (1,28,28),origin="medmnist"),
+    "octmnist": ClassiDatasetInfo(OCTMNIST, 4, (1,28,28),origin="medmnist"),
+    "dermamnist": ClassiDatasetInfo(DermaMNIST, 7, (3,28,28),origin="medmnist"),
+    "retinamnist": ClassiDatasetInfo(RetinaMNIST, 5, (3,28,28),origin="medmnist"),
+    "breastmnist": ClassiDatasetInfo(BreastMNIST, 2, (1,28,28),origin="medmnist"),
+    "tissuemnist": ClassiDatasetInfo(TissueMNIST, 8, (1,28,28),origin="medmnist"),
+    "organamnist": ClassiDatasetInfo(OrganAMNIST, 11, (1,28,28),origin="medmnist"),
+    "organcmnist": ClassiDatasetInfo(OrganCMNIST, 11, (1,28,28),origin="medmnist"),
+    "organsmnist": ClassiDatasetInfo(OrganSMNIST, 11, (1,28,28),origin="medmnist"),
 }
 
 def load_classi_dataset(dataset,batch_size,image_size=(224,224),**kwargs):
@@ -41,9 +55,15 @@ def load_classi_dataset(dataset,batch_size,image_size=(224,224),**kwargs):
         train_dataset, val_dataset, test_dataset = load_known_dataset(info)
     else :
         print(f"Dataset {dataset} not in the default choices. Proceed with custom dataset")
-        trainval_dataset=ClassificationCustomDataset(f"data/{dataset}","train",image_size=image_size)
-        train_dataset, val_dataset = split_dataset_train_val(trainval_dataset)
-        test_dataset=ClassificationCustomDataset(f"data/{dataset}","val",image_size=image_size)
+
+        try:
+            trainval_dataset = ClassificationCustomDataset(f"data/{dataset}", "train", image_size=image_size)
+            train_dataset, val_dataset = split_dataset_train_val(trainval_dataset)
+            test_dataset = ClassificationCustomDataset(f"data/{dataset}", "val", image_size=image_size)
+        except FileNotFoundError:
+            trainval_dataset = ClassificationCustomDataset(f"data/{dataset}", None, image_size=image_size)
+            train_dataset, val_dataset, test_dataset = split_dataset_train_val_test(trainval_dataset)
+
 
         info=ClassiDatasetInfo(dataset,len(trainval_dataset.classes),trainval_dataset.image_dim)
 
@@ -81,10 +101,17 @@ def load_seg_dataset(dataset,batch_size,image_size=(224,224),**kwargs):
 
 
 def load_known_dataset(info):
+
     act_dataset=info.dataset
-    trainval_dataset = act_dataset(root='./data', train=True, transform=transforms.ToTensor(), download=True)
-    train_dataset, val_dataset = split_dataset_train_val(trainval_dataset)
-    test_dataset = act_dataset(root='./data', train=False, transform=transforms.ToTensor(), download=True)
+    if info.origin=="torchvision":
+        trainval_dataset = act_dataset(root='./data', train=True, transform=transforms.ToTensor(), download=True)
+        train_dataset, val_dataset = split_dataset_train_val(trainval_dataset)
+        test_dataset = act_dataset(root='./data', train=False, transform=transforms.ToTensor(), download=True)
+    elif info.origin=="medmnist":
+        train_dataset = act_dataset(split='train', transform=transforms.ToTensor(), download=True)
+        val_dataset = act_dataset(split='val', transform=transforms.ToTensor(), download=True)
+        test_dataset = act_dataset(split='test', transform=transforms.ToTensor(), download=True)
+
     return train_dataset, val_dataset, test_dataset
 
 def load_loaders(train_dataset, val_dataset, test_dataset, batch_size):

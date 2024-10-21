@@ -9,7 +9,8 @@ from torch.utils.data import Dataset
 class ClassificationCustomDataset(Dataset):
   def __init__(self,path,split="train",image_size=(224,224),**kwargs):
       super().__init__()
-      self.path=f"{path}/{split}"
+      
+      self.path=f"{path}/{split}" if split else path
       
       self.label_dict={}
 
@@ -41,7 +42,7 @@ class ClassificationCustomDataset(Dataset):
       data=[]
       for label in self.classes:
           for img in os.listdir(f"{self.path}/{label}"):
-              if not img.lower().endswith((".jpg",".jpeg",".png")):
+              if not img.lower().endswith((".jpg",".jpeg",".png")) or img.startswith("."):
                   continue
               img_path=f"{self.path}/{label}/{img}"
               data.append((img_path,self.label_dict[label]))
@@ -142,16 +143,3 @@ class SegmentationCustomDataset(Dataset):
             data.append((img_path,label_path))
         return data
   
-
-# import matplotlib.pyplot as plt
-# dataset=SegmentationCustomDataset("data/Oxford-IIIT")
-# img=dataset[0][0].permute(1,2,0).numpy()
-# msk = dataset[0][1].permute(1, 2, 0).numpy() * 1.0
-
-# fig, axs = plt.subplots(1, 2, figsize=(10, 5))
-
-# axs[0].imshow(img)
-# axs[0].set_title('Image')
-# axs[1].imshow(msk)
-# axs[1].set_title('Masque')
-# plt.show()

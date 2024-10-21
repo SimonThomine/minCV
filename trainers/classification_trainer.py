@@ -43,7 +43,9 @@ class ClassiTrainer(BaseTrainer):
   def infer(self):
       image,self.label=self.sample
       image=image.to(self.data["device"])
-      self.label=self.label.to(self.data["device"])
+      self.label=self.label.to(self.data["device"]).squeeze()
+      # weird input for BCEWithLogitsLoss
+      self.label=self.label.long() if self.classes>2 else self.label.float()
       self.pred=self.model(image)
     
   def compute_loss(self):
