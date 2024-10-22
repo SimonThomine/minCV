@@ -11,7 +11,7 @@ class ClassiTrainer(BaseTrainer):
     super().__init__(data)
     
     assert "layers" in self.data and (isinstance(self.data["layers"],ViTParams)
-            or all(isinstance(x, BaseLayer) for x in self.data["layers"]) ), "layers not found in data or not a list of Layer objects"
+            or all(isinstance(x, BaseLayer) for x in self.data["layers"]) or (isinstance(self.data["layers"],str))), "layers not found in data or not a list of Layer objects"
 
     self.model_dir = f"models/{data['model_family']}_classification_{self.data['dataset']}"
     os.makedirs(self.model_dir, exist_ok=True)
@@ -23,6 +23,7 @@ class ClassiTrainer(BaseTrainer):
   def load_model(self):
     super().load_model()
     self.model=self.backbone(image_dim=self.image_dim,classes=self.classes,**self.data).to(self.data["device"])
+
 
   def load_optim(self):
     self.optimizer = optim.Adam(self.model.parameters(), lr=self.data["lr"])

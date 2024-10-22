@@ -20,7 +20,7 @@ default_conf = {
     "num_epochs": 10,
     "batch_size": 32,
     "device": "cpu",
-    "image_size": (28, 28)
+    "image_size": (224, 224)
 }
 
 # conf={
@@ -31,12 +31,23 @@ default_conf = {
 # }
 
 
+# conf={
+#     "model_family":"cnn",
+#     "layers": [CnnLayer(32),CnnLayer(64),CnnLayer(128),CnnLayer(256),MlpLayer(512),MlpLayer(256)],
+#     "dataset":"bloodmnist", #hymenoptera  mvtec/carpet
+#     "type":"classification",
+# }
+
+
 conf={
-    "model_family":"cnn",
-    "layers": [CnnLayer(32),CnnLayer(64),CnnLayer(128),CnnLayer(256),MlpLayer(512),MlpLayer(256)],
-    "dataset":"bloodmnist", #hymenoptera  mvtec/carpet
+    "model_family":"timm",
+    "layers": "resnet18",
+    "dataset":"PBC", #hymenoptera  mvtec/carpet
+    "pretrained":True,
     "type":"classification",
 }
+
+
 
 # conf={
 #     "model_family":"vit",

@@ -80,7 +80,6 @@ def verify_model_family(layers,model_family):
         raise ValueError("layers must be provided to create a model")
     if not model_family:
         print("model_family not provided, trying to infer it from the layers")
-    
     if isinstance(layers, ViTParams) :
         if model_family and model_family!="vit":
             raise ValueError("model_family is not consistent with the layers")
@@ -99,5 +98,12 @@ def verify_model_family(layers,model_family):
         if not model_family:
             model_family="cnn"
             print("model_family inferred as cnn")
+    elif isinstance(layers,str):
+        if model_family and model_family!="timm":
+            raise ValueError("To use a common backbone, model_family must be timm")
+        if not model_family:
+            model_family="timm"
+            print("using common backbone with timm")
+
     return model_family
     
