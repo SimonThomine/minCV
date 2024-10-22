@@ -52,7 +52,7 @@ dataset_mapping = {
 def load_classi_dataset(dataset,batch_size,image_size=(224,224),**kwargs):
     info=dataset_mapping.get(dataset)
     if info:
-        train_dataset, val_dataset, test_dataset = load_known_dataset(info)
+        train_dataset, val_dataset, test_dataset = load_known_dataset(info,image_size)
     else :
         print(f"Dataset {dataset} not in the default choices. Proceed with custom dataset")
 
@@ -100,7 +100,7 @@ def load_seg_dataset(dataset,batch_size,image_size=(224,224),**kwargs):
 
 
 
-def load_known_dataset(info):
+def load_known_dataset(info,image_size):
 
     act_dataset=info.dataset
     if info.origin=="torchvision":
@@ -108,9 +108,16 @@ def load_known_dataset(info):
         train_dataset, val_dataset = split_dataset_train_val(trainval_dataset)
         test_dataset = act_dataset(root='./data', train=False, transform=transforms.ToTensor(), download=True)
     elif info.origin=="medmnist":
-        train_dataset = act_dataset(split='train', transform=transforms.ToTensor(), download=True)
-        val_dataset = act_dataset(split='val', transform=transforms.ToTensor(), download=True)
-        test_dataset = act_dataset(split='test', transform=transforms.ToTensor(), download=True)
+        if info.image_dim[1]!=image_size[0]:
+            print(f"Resizing image from {info.image_dim[1]} to {image_size[0]}")
+            
+            info.image_dim=(info.image_dim[0],image_size[0],image_size[1])
+            print(f'info.image_dim={info.image_dim}') 
+            
+        transform=transforms.Compose([transforms.Resize((info.image_dim[1],info.image_dim[2])),transforms.ToTensor()])
+        train_dataset = act_dataset(split='train', transform=transform, download=True)
+        val_dataset = act_dataset(split='val', transform=transform, download=True)
+        test_dataset = act_dataset(split='test', transform=transform, download=True)
 
     return train_dataset, val_dataset, test_dataset
 

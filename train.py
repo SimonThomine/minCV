@@ -18,8 +18,8 @@ from minBackbones import CnnLayer,MlpLayer,CnnLayerT,ViTParams
 default_conf = {
     "lr": 0.001,
     "num_epochs": 10,
-    "batch_size": 32,
-    "device": "cpu",
+    "batch_size": 64,
+    "device": "cuda",
     "image_size": (224, 224)
 }
 
@@ -41,8 +41,8 @@ default_conf = {
 
 conf={
     "model_family":"timm",
-    "layers": "resnet18",
-    "dataset":"PBC", #hymenoptera  mvtec/carpet
+    "layers": "resnet50",
+    "dataset":"bloodmnist", # PBC
     "pretrained":True,
     "type":"classification",
 }
